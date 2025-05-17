@@ -4,7 +4,7 @@ emoji: 💬
 colorFrom: yellow
 colorTo: purple
 sdk: gradio
-sdk_version: 5.0.1
+sdk_version: 5.29.1
 app_file: app.py
 pinned: false
 short_description: CapyRead is an AI-powered chatbot that recommends books
