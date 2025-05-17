@@ -33,20 +33,27 @@ CapyRead is an AI-powered chatbot that recommends books, remembers your reflecti
 
    ```
 
-2. Create a virtual envionment to isolate dependencies:
+2. Ensure you have python 3.10 or above installed:
+
+   ```bash
+   python3 --version
+
+   ```
+
+3. Create a virtual envionment to isolate dependencies:
 
    ```
    python3 -m venv capyread
    source capyread/bin/activate
    ```
 
-3. Install requirements
+4. Install requirements
 
    ```
    pip3 install -r requirements.txt
    ```
 
-4. Run the app in local dev mode with hot reload
+5. Run the app in local dev mode with hot reload
 
    ```
    gradio app.py --demo-name=demo
