@@ -1,43 +1,48 @@
 import gradio as gr
-from huggingface_hub import InferenceClient
+from langchain_core.messages import HumanMessage, AIMessage
+from agent.workflow import create_agent_workflow, create_initial_state
 
-"""
-For more information on `huggingface_hub` Inference API support, please check the docs: https://huggingface.co/docs/huggingface_hub/v0.22.2/en/guides/inference
-"""
-# client = InferenceClient("HuggingFaceH4/zephyr-7b-beta")
-
-
-def greet(name, history):
-    return f"Hi {name}, welcome to CapyRead!"
+# Create the agent workflow
+workflow = create_agent_workflow()
+state = create_initial_state()
 
 
-demo = gr.Interface(fn=greet, inputs="text", outputs="text")
+def process_message(message: str, history: list) -> str:
+    """Process user message using the LangGraph agent."""
+    # Update state with new message and history
+    state["user_input"] = message
+    state["chat_history"].extend([
+        HumanMessage(content=message)
+    ])
+
+    # Run the workflow
+    result = workflow.invoke(state)
+
+    # Update chat history with assistant's response
+    state["chat_history"].append(AIMessage(content=result))
+
+    return result
 
 
-"""
-For information on how to customize the ChatInterface, peruse the gradio docs: https://www.gradio.app/docs/chatinterface
-"""
+# Create the Gradio interface
 demo = gr.ChatInterface(
-    greet,
-    examples=["yuki"], title="Echo Bot"
+    fn=process_message,
+    title="📚 CapyRead - Your AI Reading Assistant",
+    description="""
+    Welcome to CapyRead! I can help you:
+    1. 📚 Get book recommendations - Just ask for books in your favorite genre
+    2. 📝 Create reading journals - I'll make a Notion page for your thoughts
+    
+    Try saying:
+    - "Recommend me some science fiction books"
+    - "Create a journal entry for the book"
+    """,
+    examples=[
+        "Recommend me some mystery books with rating above 4.0",
+        "I want to read science fiction books",
+        "Create a journal entry for my thoughts"
+    ]
 )
-
-# demo = gr.ChatInterface(
-#     greet,
-#     additional_inputs=[
-#         gr.Textbox(value="You are a friendly Chatbot.", label="System message"),
-#         gr.Slider(minimum=1, maximum=2048, value=512, step=1, label="Max new tokens"),
-#         gr.Slider(minimum=0.1, maximum=4.0, value=0.7, step=0.1, label="Temperature"),
-#         gr.Slider(
-#             minimum=0.1,
-#             maximum=1.0,
-#             value=0.95,
-#             step=0.05,
-#             label="Top-p (nucleus sampling)",
-#         ),
-#     ],
-# )
-
 
 if __name__ == "__main__":
     demo.launch()

@@ -14,14 +14,26 @@ An example chatbot using [Gradio](https://gradio.app), [`huggingface_hub`](https
 
 # 📚 CapyRead — Your Cozy Capybara Reading Companion
 
-CapyRead is an AI-powered chatbot that recommends books, remembers your reflections, and pairs every title with a delicious coffee. Built with Python, LangGraph, LangSmith, and Gradio.
+CapyRead is an AI-powered reading assistant that helps you discover books, manage your reading schedule, and track your reading journey. It integrates with OpenLibrary for book recommendations, Google Calendar for scheduling, and Notion for note-taking.
 
 ## ✨ Features
 
-- 📖 Book recommendations via OpenLibrary
-- 🧠 Reflection memory using ChromaDB
-- ☕ Coffee pairings based on mood
-- 🐾 Capybara-themed personality with LangGraph orchestration
+1. 📖 Book Recommendations
+
+   - Get personalized book recommendations based on genres
+   - Filter by minimum rating
+   - View detailed book information from OpenLibrary
+
+2. 📅 Reading Schedule
+
+   - Schedule reading sessions in your Google Calendar
+   - Customize reading duration
+   - Automatic scheduling for optimal reading times
+
+3. 📝 Reading Notes
+   - Create organized Notion pages for each book
+   - Track reading progress
+   - Store your thoughts and highlights
 
 ## 🚀 Getting Started
 
@@ -30,31 +42,93 @@ CapyRead is an AI-powered chatbot that recommends books, remembers your reflecti
    ```bash
    git clone https://huggingface.co/spaces/yuki-zmstr/capyread
    cd capyread
-
    ```
 
-2. Ensure you have python 3.10 or above installed:
+2. Ensure you have python 3.10 or above installed (3.10 is recommended):
 
    ```bash
    python3 --version
-
    ```
 
-3. Create a virtual envionment to isolate dependencies:
+3. Create a virtual environment to isolate dependencies:
 
-   ```
-   python3 -m venv capyread
-   source capyread/bin/activate
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate  # On Windows, use: venv\Scripts\activate
    ```
 
-4. Install requirements
+4. Install requirements:
 
-   ```
+   ```bash
    pip3 install -r requirements.txt
    ```
 
-5. Run the app in local dev mode with hot reload
+5. Set up your environment variables:
+   Copy `.env.example` to `.env` and fill in your API keys:
 
+   ```bash
+   cp .env.example .env
    ```
-   gradio app.py --demo-name=demo
+
+6. Run the app:
+
+   ```bash
+   python3 app.py
    ```
+
+   Or for development mode with auto-reload:
+
+   ```bash
+   gradio app.py
+   ```
+
+## 🔑 API Setup
+
+1. **OpenAI API**:
+
+   - Go to [OpenAI API](https://platform.openai.com/api-keys)
+   - Create an account or log in
+   - Generate a new API key
+   - Add to `.env`: `OPENAI_API_KEY=your_key_here`
+
+2. **Google Calendar API**:
+
+   - Go to [Google Cloud Console](https://console.cloud.google.com)
+   - Create a new project
+   - Enable the Google Calendar API
+   - Create OAuth 2.0 credentials (Desktop app)
+   - Download and rename to `google_credentials.json`
+   - Add to `.env`: `GOOGLE_CALENDAR_CREDENTIALS_FILE=google_credentials.json`
+
+3. **Notion API**:
+   - Go to [Notion Developers](https://www.notion.so/my-integrations)
+   - Create new integration
+   - Copy the Integration Token
+   - Create a database and share with integration
+   - Add to `.env`:
+     ```
+     NOTION_API_KEY=your_integration_token
+     NOTION_DATABASE_ID=your_database_id
+     ```
+
+## 💬 Usage Examples
+
+Try these commands in the chat:
+
+```
+"Recommend me some science fiction books"
+"Schedule 30 minutes to read tomorrow"
+"Create a journal entry for my thoughts"
+```
+
+## Notion Database Structure
+
+The Notion database will be automatically set up with these fields:
+
+- Title (title): Book title
+- Author (rich text): Author name(s)
+- Rating (number): Book rating
+- Status (select): Reading status (To Read, Reading, Completed)
+- Link (url): Link to the book on OpenLibrary
+- Description (rich text): Book description
+- My Notes (rich text): Your reading notes and thoughts

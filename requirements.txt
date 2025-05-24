@@ -1,2 +1,14 @@
 huggingface_hub==0.31.2
 gradio==5.29.1
+requests==2.31.0
+# Google Calendar dependencies (commented out)
+# google-auth-oauthlib==1.2.0
+# google-auth-httplib2==0.2.0
+# google-api-python-client==2.120.0
+notion-client==2.2.1
+python-dotenv==1.0.1
+langchain==0.1.12
+langchain-core==0.1.31
+langchain-openai==0.0.8
+langgraph==0.0.27
+openai==1.14.2
