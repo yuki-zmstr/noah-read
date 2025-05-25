@@ -8,6 +8,9 @@ from langchain_openai import ChatOpenAI
 from services.notion_service import NotionService
 from book_api import OpenLibraryService
 
+import logging
+logging.basicConfig(level=logging.INFO)
+
 # Initialize services
 book_service = OpenLibraryService()
 # calendar_service = CalendarService()
@@ -37,14 +40,14 @@ intent_prompt = ChatPromptTemplate.from_messages([
     - book selection (index of book from last recommendations)
     
     Output format:
-    {
+    {{
         "intent": "RECOMMEND|JOURNAL|UNKNOWN",
-        "params": {
+        "params": {{
             "genres": ["fiction", "mystery"],  // for RECOMMEND
             "book_index": 0,  // index of selected book
             "reflection": ""  // for JOURNAL
-        }
-    }"""),
+        }}
+    }}"""),
     ("human", "{input}")
 ])
 
@@ -61,7 +64,7 @@ action_prompt = ChatPromptTemplate.from_messages([
 ])
 
 # Initialize LangChain chat model
-model = ChatOpenAI(temperature=0)
+model = ChatOpenAI(model="gpt-4.1-nano", temperature=0)
 
 # Intent detection node
 
@@ -74,7 +77,7 @@ def detect_intent(state: Dict) -> Dict:
     )
     response = model.invoke(messages)
     intent_data = JsonOutputParser().parse(response.content)
-    return {"intent_data": intent_data, **state}
+    return {"intent_data": intent_data}
 
 # Action execution nodes
 
@@ -140,15 +143,20 @@ def create_journal(state: Dict) -> Dict:
 # Response formatting node
 
 
-def format_response(state: Dict) -> str:
+def format_response(state: Dict) -> Dict:
     """Format the final response to the user."""
     messages = action_prompt.format_messages(
-        chat_history=state.get("chat_history", []),
+        chat_history=list(state.get("chat_history", [])),
         input=state["user_input"],
         action_result=state["action_result"]
     )
     response = model.invoke(messages)
-    return response.content
+
+    return {
+        "final_response": response.content,
+        **state
+    }
+
 
 # Main processing node
 
