@@ -2,7 +2,7 @@ import requests
 from typing import List, Dict, Optional
 import time
 
-class OpenLibraryService:
+class BookService:
     def __init__(self):
         self.base_url = "https://openlibrary.org"
         
