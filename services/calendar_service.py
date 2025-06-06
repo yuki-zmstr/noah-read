@@ -44,7 +44,7 @@ class CalendarService:
 
         def load_credentials_from_env():
             """Load credentials from an environment variable (used in deployment)."""
-            creds_str = os.getenv("BOB")
+            creds_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
             if not creds_str:
                 raise RuntimeError("No credentials file found and BOB environment variable is not set")
 
