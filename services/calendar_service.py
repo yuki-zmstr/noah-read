@@ -46,7 +46,7 @@ class CalendarService:
             """Load credentials from an environment variable (used in deployment)."""
             creds_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
             if not creds_str:
-                raise RuntimeError("No credentials file found and BOB environment variable is not set")
+                raise RuntimeError("No credentials file found and GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
 
             try:
                 creds_str = base64.b64decode(creds_str).decode("utf-8")
@@ -61,7 +61,7 @@ class CalendarService:
             if credentials_path:
                 # Local environment with OAuth installed app flow
                 flow = InstalledAppFlow.from_client_secrets_file(credentials_path, self.scopes)
-                self.creds = flow.run_local_server(port=8081)
+                self.creds = flow.run_local_server(port=8080)
             else:
                 # Deployment environment using service account credentials
                 credentials_info = load_credentials_from_env()
