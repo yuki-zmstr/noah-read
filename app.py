@@ -11,12 +11,10 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize the ReAct agent
-agent = ReActAgent()
-
 
 def process_message(message: str, history: list) -> str:
     """Process user message using the ReAct agent."""
+
     try:
         logger.info(f"Processing message: {message}")
 
@@ -47,12 +45,15 @@ demo = gr.ChatInterface(
     """,
     examples=[
         "Recommend me some science fiction books with high ratings",
-        "Schedule 45 minutes to read tomorrow at 2pm",
-        "I just finished reading Dune and loved it! It's an amazing sci-fi epic.",
+        "Schedule 45 minutes to read The Three Body Problem",
         "What are the benefits of reading regularly?",
-        "Create a review for The Martian by Andy Weir - rating 5/5"
+        "Create a review for The Martian by Andy Weir - rating 5, it was a great book"
     ]
 )
 
 if __name__ == "__main__":
+    # Initialize the ReAct agent
+    agent = ReActAgent()
     demo.launch()
+    # process_message(
+    #     "Create a review for The Martian by Andy Weir - rating 5, it was a great book", [])
