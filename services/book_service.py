@@ -109,3 +109,7 @@ class BookService:
         # Sort by rating and return top books
         all_books.sort(key=lambda x: x["rating"], reverse=True)
         return all_books[:limit] 
+    
+if __name__ == "__main__":
+    book_service = BookService()
+    print(book_service.get_trending_books())
