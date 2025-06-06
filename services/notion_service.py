@@ -6,6 +6,8 @@ import os
 from typing import Dict, Optional
 import logging
 from dotenv import load_dotenv
+from notion_client import Client
+
 
 load_dotenv()
 logger = logging.getLogger(__name__)
@@ -16,7 +18,6 @@ class NotionService:
     def __init__(self):
         self.enabled = False
         try:
-            from notion_client import Client
             
             self.api_key = os.getenv('NOTION_API_KEY')
             self.database_id = os.getenv('NOTION_DATABASE_ID')
@@ -50,12 +51,6 @@ class NotionService:
                 "error": "Notion integration not available. Please install notion-client and set NOTION_API_KEY."
             }
         
-        if not self.database_id:
-            return {
-                "success": False,
-                "error": "NOTION_DATABASE_ID not set in environment variables."
-            }
-        
         try:
             # Create the properties for the Notion page
             properties = {
@@ -71,9 +66,18 @@ class NotionService:
                 "Rating": {
                     "number": rating
                 },
+                "Review": {
+                    "rich_text": [
+                        {
+                            "text": {
+                                "content": review
+                            }
+                        }
+                    ]
+                },
                 "Status": {
-                    "select": {
-                        "name": "Completed"
+                    "status": {
+                        "name": "Done"
                     }
                 }
             }
@@ -185,7 +189,8 @@ class NotionService:
             title=book_details.get('title', 'Unknown Title'),
             author=book_details.get('author', ''),
             review="",
-            rating=int(book_details.get('rating', 5))
+            rating=int(book_details.get('rating', 5)),
+            status=book_details.get('status', 'Done')
         )
             
     def update_book_status(self, page_id: str, status: str) -> Dict:
@@ -194,7 +199,7 @@ class NotionService:
         
         Args:
             page_id: Notion page ID
-            status: New status (e.g., 'To Read', 'Reading', 'Completed')
+            status: New status (e.g., 'To Read', 'Reading', 'Done')
             
         Returns:
             Dictionary containing the update status
@@ -207,7 +212,7 @@ class NotionService:
                 page_id=page_id,
                 properties={
                     "Status": {
-                        "select": {
+                        "status": {
                             "name": status
                         }
                     }
@@ -265,3 +270,7 @@ class NotionService:
                 'success': False,
                 'error': str(e)
             } 
+        
+if __name__ == "__main__":
+    notion_service = NotionService()
+    print(notion_service.create_book_review("The Little Prince", "Antoine de Saint-Exupéry", "A classic story about a boy and his adventures with a fox.", 5))
