@@ -5,7 +5,10 @@ ReAct Agent for CapyRead - A reasoning and acting agent that can:
 3. Create book reviews in Notion
 4. Handle general conversation
 """
-
+import json
+import re
+import os
+import logging
 from typing import Dict, List, Optional, Any
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
@@ -14,17 +17,13 @@ from langchain_openai import ChatOpenAI
 from langchain_core.agents import AgentAction, AgentFinish
 from langchain_core.output_parsers import PydanticOutputParser
 from pydantic import BaseModel, Field
-import json
-import re
-import os
-import logging
+from dotenv import load_dotenv
+
 from services.book_service import BookService
 from services.calendar_service import CalendarService
 from services.notion_service import NotionService
 
-# Configure LangSmith tracing
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_PROJECT"] = "capyread-react-agent"
+load_dotenv()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,7 +34,7 @@ class AgentDecision(BaseModel):
     """Model for agent's reasoning and action decision"""
     thought: str = Field(description="The agent's reasoning about what to do")
     action: str = Field(
-        description="The action to take: 'book_recommendation', 'schedule_reading', 'create_review', 'conversation', or 'FINAL_ANSWER'")
+        description="The action to take: 'book_recommendation', 'schedule_reading', 'create_review', or 'FINAL_ANSWER'")
     action_input: str = Field(description="The input for the chosen action")
 
 
@@ -72,7 +71,6 @@ You have access to the following tools:
 1. book_recommendation - Get book recommendations from OpenLibrary
 2. schedule_reading - Schedule reading time in Google Calendar  
 3. create_review - Create book review/notes in Notion
-4. conversation - Handle general conversation
 
 Use the ReAct (Reasoning and Acting) framework:
 1. THOUGHT: Think about what the user wants and what action to take
@@ -88,10 +86,10 @@ For each response, provide your reasoning in JSON format:
 }
 
 Guidelines:
-- For book recommendations: Ask for genres/preferences if not specified
-- For scheduling: Confirm book selection and get time preferences
-- For reviews: Ask for book details and user's thoughts
-- For general chat: Respond naturally as a helpful reading assistant
+- For book recommendations: You will at least need the genre or search query. If you don't have enough information, ask the user for more information.
+- For scheduling: You will need the book title. The duration is optional. 
+- For reviews: You will need the book title, author, rating, and review text.
+- Ask the user for more information if needed. Your action will be FINAL_ANSWER, and action_input will be your response
 - Always be friendly and enthusiastic about reading!
 
 Available tools:
@@ -110,7 +108,7 @@ Available tools:
             ),
             Tool(
                 name="schedule_reading",
-                description="Schedule reading time in Google Calendar. Input should be a JSON string with 'book_title', 'duration_minutes', 'preferred_time' (optional)",
+                description="Schedule reading time in Google Calendar. Input should be a JSON string with 'book_title', and 'duration_minutes'",
                 func=self._schedule_reading
             ),
             Tool(
@@ -118,11 +116,6 @@ Available tools:
                 description="Create a book review or reading notes in Notion. Input should be a JSON string with 'book_title', 'author', 'review_text', 'rating' (1-5)",
                 func=self._create_review
             ),
-            Tool(
-                name="conversation",
-                description="Handle general conversation about reading, books, or other topics. Input is the conversation text.",
-                func=self._handle_conversation
-            )
         ]
 
     def _recommend_books(self, input_str: str) -> str:
@@ -161,7 +154,6 @@ Available tools:
             params = json.loads(input_str)
             book_title = params.get("book_title", "")
             duration = params.get("duration_minutes", 30)
-            preferred_time = params.get("preferred_time", "")
 
             if not book_title:
                 return "Please specify a book title to schedule reading time for."
@@ -169,7 +161,6 @@ Available tools:
             result = self.calendar_service.schedule_reading_session(
                 book_title=book_title,
                 duration_minutes=duration,
-                preferred_time=preferred_time
             )
 
             if result["success"]:
@@ -207,20 +198,6 @@ Available tools:
         except Exception as e:
             return f"Error creating review: {str(e)}"
 
-    def _handle_conversation(self, input_str: str) -> str:
-        """Tool for general conversation"""
-        conversation_prompt = f"""
-        You are CapyRead, a friendly AI reading assistant. The user said: "{input_str}"
-        
-        Respond naturally and helpfully. If they're asking about books, reading, or related topics,
-        provide enthusiastic and knowledgeable responses. If they need specific actions like
-        book recommendations, scheduling, or reviews, guide them appropriately.
-        """
-
-        response = self.llm.invoke(
-            [SystemMessage(content=conversation_prompt)])
-        return response.content
-
     def _parse_agent_decision(self, text: str) -> AgentDecision:
         """Parse the agent's decision from LLM output"""
         # Try to extract JSON from the response
@@ -229,15 +206,19 @@ Available tools:
             try:
                 decision_data = json.loads(json_match.group())
                 logger.info(f"Parsed agent decision: {decision_data}")
-                
+
                 # Convert action_input to string if it's a dict/object
                 if isinstance(decision_data.get('action_input'), (dict, list)):
-                    decision_data['action_input'] = json.dumps(decision_data['action_input'])
-                    
+                    decision_data['action_input'] = json.dumps(
+                        decision_data['action_input'])
+                elif not isinstance(decision_data.get('action_input'), str):
+                    decision_data['action_input'] = str(
+                        decision_data.get('action_input', ''))
+
                 return AgentDecision(**decision_data)
             except Exception as e:
                 logger.error(f"Error parsing decision JSON: {e}")
-                pass
+                raise
 
         # Fallback parsing
         if "FINAL_ANSWER" in text:
@@ -253,79 +234,74 @@ Available tools:
                 action_input=text
             )
 
-    def run(self, user_input: str, max_iterations: int = 5) -> str:
+    def run(self, user_input: str) -> str:
         """Run the ReAct agent"""
         self.chat_history.append(HumanMessage(content=user_input))
 
         agent_scratchpad = ""
 
-        for iteration in range(max_iterations):
-            logger.info(f"iteration: {iteration}")
-            # Format the prompt
-            formatted_prompt = self.react_prompt.format(
-                tools="\n".join(
-                    [f"- {tool.name}: {tool.description}" for tool in self.tools]),
-                format_instructions=self.parser.get_format_instructions(),
-                # All except current input
-                chat_history=self.chat_history[:-1],
-                input=user_input,
-                agent_scratchpad=agent_scratchpad
+        # Format the prompt
+        formatted_prompt = self.react_prompt.format(
+            tools="\n".join(
+                [f"- {tool.name}: {tool.description}" for tool in self.tools]),
+            format_instructions=self.parser.get_format_instructions(),
+            chat_history=self.chat_history[:-1],
+            input=user_input,
+            agent_scratchpad=agent_scratchpad
+        )
+
+        # Get LLM response
+        response = self.llm.invoke(
+            [HumanMessage(content=formatted_prompt)])
+
+        # Parse the decision
+        try:
+            decision = self._parse_agent_decision(response.content)
+        except Exception as e:
+            # Fallback to conversation
+            decision = AgentDecision(
+                thought=f"Error parsing decision: {e}",
+                action="conversation",
+                action_input=response.content
             )
 
-            # Get LLM response
-            response = self.llm.invoke(
-                [HumanMessage(content=formatted_prompt)])
-            logger.info(f"LLM response: {response.content}")
+        # Update scratchpad with thought
+        agent_scratchpad += f"\nThought: {decision.thought}"
+        agent_scratchpad += f"\nAction: {decision.action}"
+        agent_scratchpad += f"\nAction Input: {decision.action_input}"
 
-            # Parse the decision
+        # Check if final answer
+        if decision.action == "FINAL_ANSWER":
+            final_response = decision.action_input
+            self.chat_history.append(AIMessage(content=final_response))
+            return final_response
+        # Execute the tool
+        if decision.action in self.tool_map:
+            tool = self.tool_map[decision.action]
             try:
-                decision = self._parse_agent_decision(response.content)
-            except Exception as e:
-                # Fallback to conversation
-                decision = AgentDecision(
-                    thought=f"Error parsing decision: {e}",
-                    action="conversation",
-                    action_input=response.content
-                )
+                logger.info(f"Executing tool: {decision.action}")
+                observation = tool.func(decision.action_input)
 
-            agent_scratchpad += f"Thought: {decision.thought}\n"
+                # Update scratchpad with observation
+                agent_scratchpad += f"\nObservation: {observation}\n"
 
-            # Check if final answer
-            if decision.action == "FINAL_ANSWER":
-                final_response = decision.action_input
-                self.chat_history.append(AIMessage(content=final_response))
-                return final_response
-
-            # Execute the tool
-            if decision.action in self.tool_map:
-                tool = self.tool_map[decision.action]
-                agent_scratchpad += f"Action: {decision.action}\n"
-                agent_scratchpad += f"Action Input: {decision.action_input}\n"
-
-                try:
-                    logger.info(f"Executing tool: {decision.action}")
-                    observation = tool.func(decision.action_input)
-                    
-                    # If it's a book recommendation and we got results successfully
-                    if decision.action == "book_recommendation" and "Here are some book recommendations:" in observation:
-                        self.chat_history.append(AIMessage(content=observation))
-                        return observation
-                        
-                except Exception as e:
-                    observation = f"Error: {str(e)}"
-
-                agent_scratchpad += f"Observation: {observation}\n"
-            else:
-                # Unknown action, treat as conversation
-                observation = self._handle_conversation(decision.action_input)
                 self.chat_history.append(AIMessage(content=observation))
                 return observation
 
-        # If we reach max iterations, return the last observation
-        fallback_response = "I apologize, but I'm having trouble processing your request. Could you please rephrase what you'd like me to help you with?"
-        self.chat_history.append(AIMessage(content=fallback_response))
-        return fallback_response
+            except Exception as e:
+                observation = f"Error: {str(e)}"
+                agent_scratchpad += f"\nObservation: {observation}\n"
+        else:
+            # Unknown action, treat as conversation
+            observation = self._handle_conversation(decision.action_input)
+            self.chat_history.append(AIMessage(content=observation))
+            return observation
 
     def reset_conversation(self):
         """Reset the conversation history"""
         self.chat_history = []
+
+
+if __name__ == "__main__":
+    agent = ReActAgent()
+    agent.run("Schedule 45 minutes to read The Three Body Problem")
