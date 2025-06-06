@@ -228,8 +228,15 @@ Available tools:
         if json_match:
             try:
                 decision_data = json.loads(json_match.group())
+                logger.info(f"Parsed agent decision: {decision_data}")
+                
+                # Convert action_input to string if it's a dict/object
+                if isinstance(decision_data.get('action_input'), (dict, list)):
+                    decision_data['action_input'] = json.dumps(decision_data['action_input'])
+                    
                 return AgentDecision(**decision_data)
-            except:
+            except Exception as e:
+                logger.error(f"Error parsing decision JSON: {e}")
                 pass
 
         # Fallback parsing
@@ -270,8 +277,6 @@ Available tools:
                 [HumanMessage(content=formatted_prompt)])
             logger.info(f"LLM response: {response.content}")
 
-            # TODO: how to get the agent to ask for more input, without considering it as an error
-
             # Parse the decision
             try:
                 decision = self._parse_agent_decision(response.content)
@@ -298,7 +303,14 @@ Available tools:
                 agent_scratchpad += f"Action Input: {decision.action_input}\n"
 
                 try:
+                    logger.info(f"Executing tool: {decision.action}")
                     observation = tool.func(decision.action_input)
+                    
+                    # If it's a book recommendation and we got results successfully
+                    if decision.action == "book_recommendation" and "Here are some book recommendations:" in observation:
+                        self.chat_history.append(AIMessage(content=observation))
+                        return observation
+                        
                 except Exception as e:
                     observation = f"Error: {str(e)}"
 
