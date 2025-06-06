@@ -3,7 +3,7 @@ Notion Service for CapyRead - Handles Notion integration for book reviews and no
 """
 
 import os
-from typing import Dict, Optional
+from typing import Dict
 import logging
 from dotenv import load_dotenv
 from notion_client import Client
