@@ -4,10 +4,14 @@ Calendar Service for CapyRead - Handles Google Calendar integration for scheduli
 
 import os
 import datetime
+import json
+import tempfile
+import base64
 from typing import Dict, Optional
 import logging
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from googleapiclient.discovery import build
 
@@ -29,25 +33,50 @@ class CalendarService:
         self.setup_credentials()
 
     def setup_credentials(self):
-        """Set up Google Calendar API credentials."""
+        """Set up Google Calendar API credentials for local or deployment use."""
 
-        try:
+        def load_credentials_from_file():
+            """Attempt to load local credentials file."""
             credentials_file = os.getenv('GOOGLE_CALENDAR_CREDENTIALS_FILE', 'google_credentials.json')
             base_dir = os.path.dirname(os.path.abspath(__file__))
-            credentials_file = os.path.abspath(os.path.join(base_dir, '..', credentials_file))
-            if not os.path.exists(credentials_file):
-                logger.error(f"Google credentials file not found: {credentials_file}")
-                return False
-                
-            flow = InstalledAppFlow.from_client_secrets_file(credentials_file, self.scopes)
-            self.creds = flow.run_local_server(port=8080)
+            full_path = os.path.abspath(os.path.join(base_dir, '..', credentials_file))
+            return full_path if os.path.exists(full_path) else None
 
-            self.service = build('calendar', 'v3', credentials=self.creds)
+        def load_credentials_from_env():
+            """Load credentials from an environment variable (used in deployment)."""
+            creds_str = os.getenv("BOB")
+            if not creds_str:
+                raise RuntimeError("No credentials file found and BOB environment variable is not set")
+
+            try:
+                creds_str = base64.b64decode(creds_str).decode("utf-8")
+            except Exception:
+                pass  # Assume it's plain JSON if not base64
+
+            return json.loads(creds_str)
+
+        try:
+            credentials_path = load_credentials_from_file()
+
+            if credentials_path:
+                # Local environment with OAuth installed app flow
+                flow = InstalledAppFlow.from_client_secrets_file(credentials_path, self.scopes)
+                self.creds = flow.run_local_server(port=8081)
+            else:
+                # Deployment environment using service account credentials
+                credentials_info = load_credentials_from_env()
+                self.creds = service_account.Credentials.from_service_account_info(
+                    credentials_info, scopes=self.scopes
+                    )
+
+            self.service = build("calendar", "v3", credentials=self.creds)
             return True
-            
+
         except Exception as e:
-            logger.error(f"Error setting up Google Calendar credentials: {str(e)}")
+            print(f"[Credential Setup Error] {e}")
             return False
+
+
 
     def find_earliest_available_slot(self, duration_minutes: int = 30) -> datetime.datetime:
         """
