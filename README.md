@@ -1,6 +1,6 @@
 ---
 title: Noah
-emoji: 💬
+emoji: 📕
 colorFrom: yellow
 colorTo: purple
 sdk: gradio
