@@ -1,5 +1,5 @@
 """
-ReAct Agent for CapyRead - A reasoning and acting agent that can:
+ReAct Agent for Noah - A reasoning and acting agent that can:
 1. Recommend books using OpenLibrary
 2. Schedule reading time in Google Calendar 
 3. Create book reviews in Notion
@@ -39,7 +39,7 @@ class AgentDecision(BaseModel):
 
 
 class ReActAgent:
-    """ReAct (Reasoning and Acting) Agent for CapyRead"""
+    """ReAct (Reasoning and Acting) Agent for Noah"""
 
     def __init__(self):
         self.llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
@@ -65,7 +65,7 @@ class ReActAgent:
 
     def _get_system_prompt(self) -> str:
         """Get the system prompt for the ReAct agent"""
-        return """You are CapyRead, an AI reading assistant that helps users discover books, schedule reading time, and track their reading journey.
+        return """You are Noah, an AI reading assistant that helps users discover books, schedule reading time, and track their reading journey.
 
 You have access to the following tools:
 1. book_recommendation - Get book recommendations from OpenLibrary

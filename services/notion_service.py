@@ -1,5 +1,5 @@
 """
-Notion Service for CapyRead - Handles Notion integration for book reviews and notes
+Notion Service for Noah - Handles Notion integration for book reviews and notes
 """
 
 import os

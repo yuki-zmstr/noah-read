@@ -1,5 +1,5 @@
 ---
-title: Capyread
+title: Noah
 emoji: 💬
 colorFrom: yellow
 colorTo: purple
@@ -7,14 +7,14 @@ sdk: gradio
 sdk_version: 5.29.1
 app_file: app.py
 pinned: false
-short_description: CapyRead is an AI-powered chatbot that recommends books
+short_description: Noah is an AI-powered chatbot that recommends books
 ---
 
 An example chatbot using [Gradio](https://gradio.app), [`huggingface_hub`](https://huggingface.co/docs/huggingface_hub/v0.22.2/en/index), and the [Hugging Face Inference API](https://huggingface.co/docs/api-inference/index).
 
-# 📚 CapyRead — Your Cozy Capybara Reading Companion
+# 📚 Noah — Your AI Reading Companion
 
-CapyRead is an AI-powered reading assistant that helps you discover books, manage your reading schedule, and track your reading journey. It integrates with OpenLibrary for book recommendations, Google Calendar for scheduling, and Notion for note-taking.
+Noah is an AI-powered reading assistant that helps you discover books, manage your reading schedule, and track your reading journey. It integrates with OpenLibrary for book recommendations, Google Calendar for scheduling, and Notion for note-taking.
 
 ## ✨ Features
 
@@ -40,8 +40,8 @@ CapyRead is an AI-powered reading assistant that helps you discover books, manag
 1. Clone the repo:
 
    ```bash
-   git clone https://huggingface.co/spaces/yuki-zmstr/capyread
-   cd capyread
+   git clone https://huggingface.co/spaces/yuki-zmstr/noah-read
+   cd noah-read
    ```
 
 2. Ensure you have python 3.10 or above installed (3.10 is recommended):

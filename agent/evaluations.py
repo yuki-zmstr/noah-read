@@ -1,5 +1,5 @@
 """
-Evaluation framework for CapyRead ReAct Agent
+Evaluation framework for Noah ReAct Agent
 """
 
 import asyncio
@@ -12,15 +12,15 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class CapyReadEvaluator:
-    """Evaluator for CapyRead agent performance"""
+class NoahEvaluator:
+    """Evaluator for Noah agent performance"""
     
     def __init__(self, langsmith_client: Client):
         self.client = langsmith_client
         
     def create_evaluation_dataset(self) -> str:
         """Create evaluation dataset with test cases"""
-        dataset_name = "capyread-agent-eval"
+        dataset_name = "noah-agent-eval"
         
         test_cases = [
             # Book recommendation tests
@@ -88,7 +88,7 @@ class CapyReadEvaluator:
             # Create dataset
             dataset = self.client.create_dataset(
                 dataset_name=dataset_name,
-                description="Evaluation dataset for CapyRead ReAct Agent"
+                description="Evaluation dataset for Noah ReAct Agent"
             )
             
             # Add examples to dataset
@@ -261,7 +261,7 @@ async def run_evaluation(agent, dataset_id: str, langsmith_client: Client) -> Di
             evaluate_response_quality,
             evaluate_tool_usage
         ],
-        experiment_prefix="capyread-agent",
+        experiment_prefix="noah-agent",
         client=langsmith_client
     )
     

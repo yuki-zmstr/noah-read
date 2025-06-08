@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Run evaluation on the CapyRead ReAct Agent
+Run evaluation on the Noah ReAct Agent
 """
 
 import asyncio
@@ -9,20 +9,20 @@ import json
 from dotenv import load_dotenv
 from langsmith import Client
 from agent.react_agent import ReActAgent
-from agent.evaluations import CapyReadEvaluator, run_evaluation, analyze_evaluation_results
+from agent.evaluations import NoahEvaluator, run_evaluation, analyze_evaluation_results
 
 # Load environment variables
 load_dotenv()
 
 async def main():
     """Main evaluation runner"""
-    print("🧪 Starting CapyRead Agent Evaluation...")
+    print("🧪 Starting Noah Agent Evaluation...")
     
     # Initialize LangSmith client
     langsmith_client = Client()
     
     # Initialize evaluator
-    evaluator = CapyReadEvaluator(langsmith_client)
+    evaluator = NoahEvaluator(langsmith_client)
     
     # Create evaluation dataset
     print("📊 Creating evaluation dataset...")

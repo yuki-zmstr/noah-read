@@ -1,5 +1,5 @@
 """
-Calendar Service for CapyRead - Handles Google Calendar integration for scheduling reading sessions
+Calendar Service for Noah - Handles Google Calendar integration for scheduling reading sessions
 """
 
 import os
@@ -210,7 +210,7 @@ class CalendarService:
                 'summary': f"📚 Reading: {book_title}",
                 'description': f"Reading session for '{book_title}'\n\n"
                 f"Duration: {duration_minutes} minutes\n"
-                f"Scheduled via CapyRead AI Assistant",
+                f"Scheduled via Noah AI Assistant",
                 'start': {
                     'dateTime': start_time.isoformat(),
                     'timeZone': self.timezone,

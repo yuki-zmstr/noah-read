@@ -32,9 +32,9 @@ def process_message(message: str, history: list) -> str:
 # Create the Gradio interface
 demo = gr.ChatInterface(
     fn=process_message,
-    title="📚 CapyRead - Your AI Reading Assistant",
+    title="📚 Noah - Your AI Reading Assistant",
     description="""
-    Welcome to CapyRead! I'm your intelligent reading companion powered by a ReAct agent. I can help you:
+    Hi, I'm Noah! Your intelligent reading companion powered by a ReAct agent. I can help you:
     
     📖 **Book Recommendations**: Get personalized book suggestions from OpenLibrary
     📅 **Reading Scheduling**: Schedule reading sessions in your Google Calendar  

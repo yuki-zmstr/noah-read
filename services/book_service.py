@@ -1,5 +1,5 @@
 """
-Book Service for CapyRead - Handles book recommendations using OpenLibrary API
+Book Service for Noah - Handles book recommendations using OpenLibrary API
 """
 
 import requests
