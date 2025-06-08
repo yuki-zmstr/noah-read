@@ -27,6 +27,7 @@ class CalendarService:
         self.service = None
         self.scopes = ['https://www.googleapis.com/auth/calendar']
         self.timezone = 'Asia/Tokyo'  # Set default timezone to UTC+9
+        self.calendar_id = os.getenv('GOOGLE_CALENDAR_ID')
         self.business_hours_start = 8  # 8 AM JST
         self.business_hours_end = 21   # 9 PM JST
         
@@ -42,7 +43,6 @@ class CalendarService:
         """Set up Google Calendar API credentials for local or deployment use."""
 
         def load_credentials_from_file():
-            """Attempt to load local credentials file."""
             credentials_file = os.getenv(
                 'GOOGLE_CALENDAR_CREDENTIALS_FILE', 'google_credentials.json')
             base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -55,12 +55,12 @@ class CalendarService:
             creds_str = os.getenv("GOOGLE_SERVICE_ACCOUNT_JSON")
             if not creds_str:
                 raise RuntimeError(
-                    "No credentials file found and GOOGLE_SERVICE_ACCOUNT_JSON environment variable is not set")
+                    "No credentials found: set GOOGLE_SERVICE_ACCOUNT_JSON env var")
 
             try:
                 creds_str = base64.b64decode(creds_str).decode("utf-8")
             except Exception:
-                pass  # Assume it's plain JSON if not base64
+                pass  # Treat as raw JSON if not base64
 
             return json.loads(creds_str)
 
@@ -68,18 +68,29 @@ class CalendarService:
             credentials_path = load_credentials_from_file()
 
             if credentials_path:
-                # Local environment with OAuth installed app flow
+                # 🧪 Local OAuth flow (Installed App)
                 flow = InstalledAppFlow.from_client_secrets_file(
                     credentials_path, self.scopes)
                 self.creds = flow.run_local_server(port=8080)
             else:
-                # Deployment environment using service account credentials
+                # 🚀 Deployment (Service Account)
+                print("Using service account credentials for deployment")
                 credentials_info = load_credentials_from_env()
                 self.creds = service_account.Credentials.from_service_account_info(
                     credentials_info, scopes=self.scopes
                 )
 
+            # 📡 Build Calendar API client
             self.service = build("calendar", "v3", credentials=self.creds)
+
+            # ✅ Set calendar ID
+            if not self.calendar_id:
+                raise ValueError("GOOGLE_CALENDAR_ID environment variable not set")
+            
+            # Optional sanity check
+            self.service.calendars().get(calendarId=self.calendar_id).execute()
+
+            print("✅ Google Calendar client initialized.")
             return True
 
         except Exception as e:
