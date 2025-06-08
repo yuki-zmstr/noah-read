@@ -135,12 +135,12 @@ class CalendarService:
             body = {
                 "timeMin": search_start.isoformat(),
                 "timeMax": search_end.isoformat(),
-                "items": [{"id": "primary"}],
+                "items": [{"id": self.calendar_id}],
                 "timeZone": self.timezone
             }
 
             free_busy_query = self.service.freebusy().query(body=body).execute()
-            busy_periods = free_busy_query["calendars"]["primary"]["busy"]
+            busy_periods = free_busy_query["calendars"][self.calendar_id]["busy"]
 
             current_time = search_start
             slot_duration = datetime.timedelta(minutes=duration)
@@ -251,16 +251,10 @@ class CalendarService:
             # Try to create the event
             try:
                 created_event = self.service.events().insert(
-                    calendarId='primary', body=event).execute()
+                    calendarId=self.calendar_id, body=event).execute()
                 logger.info(f"Successfully created calendar event: {created_event['id']}")
             except Exception as calendar_error:
                 logger.error(f"Failed to create calendar event: {str(calendar_error)}")
-                # Try with a specific calendar ID if 'primary' fails
-                if "notFound" in str(calendar_error) or "forbidden" in str(calendar_error).lower():
-                    return {
-                        'success': False,
-                        'error': 'Unable to access your primary calendar. Please ensure the service account has been granted access to your Google Calendar, or use OAuth credentials instead of service account credentials.'
-                    }
                 raise calendar_error
 
             return {
@@ -287,7 +281,7 @@ class CalendarService:
             now = datetime.datetime.utcnow().isoformat() + 'Z'
 
             events_result = self.service.events().list(
-                calendarId='primary',
+                calendarId=self.calendar_id,
                 timeMin=now,
                 maxResults=limit,
                 singleEvents=True,
