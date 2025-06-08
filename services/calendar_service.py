@@ -26,12 +26,17 @@ class CalendarService:
         self.creds = None
         self.service = None
         self.scopes = ['https://www.googleapis.com/auth/calendar']
-        self.enabled = True
         self.timezone = 'Asia/Tokyo'  # Set default timezone to UTC+9
         self.business_hours_start = 8  # 8 AM JST
         self.business_hours_end = 21   # 9 PM JST
-        logger.info("Google Calendar service initialized successfully")
-        self.setup_credentials()
+        
+        # Try to set up credentials
+        if self.setup_credentials():
+            self.enabled = True
+            logger.info("Google Calendar service initialized successfully")
+        else:
+            self.enabled = False
+            logger.error("Failed to initialize Google Calendar service")
 
     def setup_credentials(self):
         """Set up Google Calendar API credentials for local or deployment use."""
@@ -78,16 +83,17 @@ class CalendarService:
             return True
 
         except Exception as e:
+            logger.error(f"[Credential Setup Error] {e}")
             print(f"[Credential Setup Error] {e}")
             return False
 
-    def find_earliest_available_slot(self, duration_minutes: int = 30) -> datetime.datetime:
+    def find_earliest_available_slot(self, duration: int = 30) -> datetime.datetime:
         """
         Find the earliest available time slot in the calendar between 8 AM and 9 PM JST.
         Searches across multiple days until an available slot is found.
 
         Args:
-            duration_minutes: Duration of the slot needed in minutes
+            duration: Duration of the slot needed in minutes
 
         Returns:
             datetime object representing the start of the earliest available slot
@@ -126,7 +132,7 @@ class CalendarService:
             busy_periods = free_busy_query["calendars"]["primary"]["busy"]
 
             current_time = search_start
-            slot_duration = datetime.timedelta(minutes=duration_minutes)
+            slot_duration = datetime.timedelta(minutes=duration)
 
             while current_time < search_end:
                 # Skip times outside business hours
@@ -179,23 +185,30 @@ class CalendarService:
             logger.error(f"Error finding available slot: {str(e)}")
             raise Exception(f"Could not find an available slot: {str(e)}")
 
-    def schedule_reading_session(self, book_title: str, duration_minutes: int = 30) -> Dict:
+    def schedule_reading_session(self, book_title: str, duration: int = 30) -> Dict:
         """
         Schedule a reading session in Google Calendar.
 
         Args:
             book_title: Title of the book to read
-            duration_minutes: Duration of reading session in minutes
+            duration: Duration of reading session in minutes
             preferred_time: Preferred time for the session (not used anymore)
 
         Returns:
             Dictionary containing success status and event details
         """
+        # Check if calendar service is enabled and properly configured
+        if not self.enabled or not self.service:
+            return {
+                'success': False,
+                'error': 'Calendar service not available. Please check your Google Calendar configuration and credentials.'
+            }
+        
         try:
             # Find the earliest available slot within business hours
             try:
                 start_time = self.find_earliest_available_slot(
-                    duration_minutes)
+                    duration)
                 logger.info(f"Found available slot: {start_time}")
             except Exception as e:
                 return {
@@ -204,12 +217,12 @@ class CalendarService:
                 }
 
             end_time = start_time + \
-                datetime.timedelta(minutes=duration_minutes)
+                datetime.timedelta(minutes=duration)
 
             event = {
                 'summary': f"📚 Reading: {book_title}",
                 'description': f"Reading session for '{book_title}'\n\n"
-                f"Duration: {duration_minutes} minutes\n"
+                f"Duration: {duration} minutes\n"
                 f"Scheduled via Noah AI Assistant",
                 'start': {
                     'dateTime': start_time.isoformat(),
@@ -224,15 +237,27 @@ class CalendarService:
                 }
             }
 
-            created_event = self.service.events().insert(
-                calendarId='primary', body=event).execute()
+            # Try to create the event
+            try:
+                created_event = self.service.events().insert(
+                    calendarId='primary', body=event).execute()
+                logger.info(f"Successfully created calendar event: {created_event['id']}")
+            except Exception as calendar_error:
+                logger.error(f"Failed to create calendar event: {str(calendar_error)}")
+                # Try with a specific calendar ID if 'primary' fails
+                if "notFound" in str(calendar_error) or "forbidden" in str(calendar_error).lower():
+                    return {
+                        'success': False,
+                        'error': 'Unable to access your primary calendar. Please ensure the service account has been granted access to your Google Calendar, or use OAuth credentials instead of service account credentials.'
+                    }
+                raise calendar_error
 
             return {
                 'success': True,
                 'event_id': created_event['id'],
                 'event_link': created_event.get('htmlLink', ''),
                 'scheduled_time': start_time.strftime('%Y-%m-%d %H:%M'),
-                'duration': duration_minutes
+                'duration': duration
             }
 
         except Exception as e:
