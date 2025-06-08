@@ -86,10 +86,20 @@ For each response, provide your reasoning in JSON format:
 }
 
 Guidelines:
-- For book recommendations: You will at least need the genre or search query. If you don't have enough information, ask the user for more information.
-- For scheduling: You will need the book title. The duration is optional. 
-- For reviews: You will need the book title, author, rating, and review text.
-- Ask the user for more information if needed. Your action will be FINAL_ANSWER, and action_input will be your response
+Book recommendations: 
+- You will at least need the genre or search query. 
+- The action input must be in JSON format, with 'genre', and 'min_rating' (optional) fields"
+- If you don't have enough information, ask the user for more information.
+
+Scheduling:
+- You will need the book title. The duration is optional. 
+-  The action input must be in JSON format, with 'book_title' and 'duration' fields
+
+Reviews:
+- You will need the book title, author, rating, and review text.
+- The action input must be in JSON format, with 'book_title', 'author', 'review_text', and 'rating' fields
+
+- In the case you need to ask the user for more input, your action will be FINAL_ANSWER, and action_input will be your response
 - Always be friendly and enthusiastic about reading!
 
 Available tools:
@@ -103,12 +113,12 @@ Available tools:
         return [
             Tool(
                 name="book_recommendation",
-                description="Get book recommendations based on genre, author, or preferences. Input should be a JSON string with 'query', 'genre', 'min_rating' (optional)",
+                description="Get book recommendations based on genre, author, or preferences. Input should be a JSON string with 'query', 'genre', 'min_rating' (optional) fields",
                 func=self._recommend_books
             ),
             Tool(
                 name="schedule_reading",
-                description="Schedule reading time in Google Calendar. Input should be a JSON string with 'book_title', and 'duration_minutes'",
+                description="Schedule reading time in Google Calendar. Input should be a JSON string with 'book_title', and 'duration'",
                 func=self._schedule_reading
             ),
             Tool(
@@ -153,14 +163,14 @@ Available tools:
         try:
             params = json.loads(input_str)
             book_title = params.get("book_title", "")
-            duration = params.get("duration_minutes", 30)
+            duration = params.get("duration", 30)
 
             if not book_title:
                 return "Please specify a book title to schedule reading time for."
 
             result = self.calendar_service.schedule_reading_session(
                 book_title=book_title,
-                duration_minutes=duration,
+                duration=duration,
             )
 
             if result["success"]:
