@@ -102,6 +102,7 @@ class CalendarService:
         """
         Find the earliest available time slot in the calendar between 8 AM and 9 PM JST.
         Searches across multiple days until an available slot is found.
+        Time slots are checked in 15-minute increments (00, 15, 30, 45).
 
         Args:
             duration: Duration of the slot needed in minutes
@@ -111,6 +112,16 @@ class CalendarService:
         """
         now = datetime.datetime.now(
             datetime.timezone(datetime.timedelta(hours=9)))
+
+        def round_up_to_15_minutes(dt):
+            """Round datetime up to the next 15-minute mark (00, 15, 30, 45)"""
+            minute = dt.minute
+            if minute % 15 == 0:
+                return dt.replace(second=0, microsecond=0)
+            next_quarter = ((minute // 15) + 1) * 15
+            if next_quarter >= 60:
+                return (dt + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+            return dt.replace(minute=next_quarter, second=0, microsecond=0)
 
         # If current time is before 8 AM, start from 8 AM today
         if now.hour < self.business_hours_start:
@@ -122,10 +133,8 @@ class CalendarService:
             search_start = tomorrow.replace(
                 hour=self.business_hours_start, minute=0, second=0, microsecond=0)
         else:
-            # Start from current time, rounded up to the nearest minute
-            search_start = now.replace(second=0, microsecond=0)
-            if search_start.minute > 0:  # Round up to next minute if not at start of minute
-                search_start = search_start + datetime.timedelta(minutes=1)
+            # Start from current time, rounded up to the next 15-minute mark
+            search_start = round_up_to_15_minutes(now)
 
         # Look ahead for 30 days maximum
         search_end = search_start + datetime.timedelta(days=30)
@@ -176,18 +185,26 @@ class CalendarService:
                     # AND the slot ends after a busy period starts
                     if (current_time < period_end and slot_end > period_start):
                         is_free = False
-                        # Move directly to the end of this busy period instead of adding a minute
-                        current_time = period_end
+                        # Move to the end of this busy period, rounded up to next 15-minute mark
+                        def round_up_to_15_minutes_inner(dt):
+                            minute = dt.minute
+                            if minute % 15 == 0:
+                                return dt.replace(second=0, microsecond=0)
+                            next_quarter = ((minute // 15) + 1) * 15
+                            if next_quarter >= 60:
+                                return (dt + datetime.timedelta(hours=1)).replace(minute=0, second=0, microsecond=0)
+                            return dt.replace(minute=next_quarter, second=0, microsecond=0)
+                        current_time = round_up_to_15_minutes_inner(period_end)
                         break
 
                 if is_free:
                     return current_time
 
-                # If we didn't find a slot, try the next minute
+                # If we didn't find a slot, try the next 15-minute increment
                 if not is_free:
                     continue  # Skip the increment since we already moved to period_end
 
-                current_time += datetime.timedelta(minutes=1)
+                current_time += datetime.timedelta(minutes=15)
 
             # If no slot found within 30 days, raise an exception
             raise Exception("No available slots found in the next 30 days")
