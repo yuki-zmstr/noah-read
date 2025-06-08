@@ -37,8 +37,11 @@ demo = gr.ChatInterface(
     Hi, I'm Noah! Your intelligent reading companion powered by a ReAct agent. I can help you:
     
     📖 **Book Recommendations**: Get personalized book suggestions from OpenLibrary
+    
     📅 **Reading Scheduling**: Schedule reading sessions in your Google Calendar  
+    
     📝 **Book Reviews**: Create and manage book reviews in Notion
+    
     💬 **General Chat**: Discuss books, reading habits, and get reading advice
     
     Just tell me what you'd like to do in natural language!
