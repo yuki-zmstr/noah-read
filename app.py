@@ -42,6 +42,8 @@ demo = gr.ChatInterface(
     
     📝 **Book Reviews**: Create and manage book reviews in Notion
     
+    🔍 **Word Meanings**: I will help you explain the meaning of words
+    
     💬 **General Chat**: Discuss books, reading habits, and get reading advice
     
     Just tell me what you'd like to do in natural language!
