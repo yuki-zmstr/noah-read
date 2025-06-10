@@ -58,6 +58,6 @@ demo = gr.ChatInterface(
 if __name__ == "__main__":
     # Initialize the ReAct agent
     agent = ReActAgent()
-    demo.launch()
+    demo.launch(pwa=True)
     # process_message(
     #     "Create a review for The Martian by Andy Weir - rating 5, it was a great book", [])
