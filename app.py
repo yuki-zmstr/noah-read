@@ -50,7 +50,7 @@ demo = gr.ChatInterface(
         "Recommend me some science fiction books with high ratings",
         "Schedule 45 minutes to read The Three Body Problem",
         "What are the benefits of reading regularly?",
-        "Create a review for The Martian by Andy Weir - rating 5, it was a great book"
+        "Create a review for Harry Potter and the Prisoner of Azkaban by by J.K. Rowling - rating 5, it was a great book!"
     ],
     cache_examples=False
 )
