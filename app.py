@@ -51,6 +51,7 @@ demo = gr.ChatInterface(
     examples=[
         "Recommend me some science fiction books with high ratings",
         "Schedule 45 minutes to read The Three Body Problem",
+        "Schedule a reading session for The Three Body Problem",
         "What are the benefits of reading regularly?",
         "Create a review for Factfulness by Hans Rosling - rating 5, it was a great book!"
     ],
