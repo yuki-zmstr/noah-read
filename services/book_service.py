@@ -81,41 +81,22 @@ class BookService:
                 f"Error getting book details for {book_key}: {str(e)}")
             return {}
 
-    def get_books_by_genre(self, genre: str, min_rating: float = 4.0, limit: int = 5) -> List[Dict]:
+    def get_books_by_genre(self, genre: str, limit: int = 5) -> List[Dict]:
         """Get book recommendations based on genre."""
         # Construct a search query that includes the genre
         query = f"subject:{genre}"
-        # Get more to filter by rating
-        books = self.search_books(query, limit * 2)
+        books = self.search_books(query, limit)
 
-        # Filter by rating if specified
-        if min_rating > 0:
-            books = [book for book in books if book["rating"] >= min_rating]
+        return books[:limit]
+    
+    def get_books_by_author(self, author: str, limit: int = 5) -> List[Dict]:
+        """Get book recommendations based on author."""
+        # Construct a search query that includes the author
+        query = f"author:{author}"
+        books = self.search_books(query, limit)
 
         return books[:limit]
 
-    def get_cover_url(self, cover_id: Optional[int], size: str = "M") -> str:
-        """Get the URL for a book cover image."""
-        if cover_id:
-            return f"https://covers.openlibrary.org/b/id/{cover_id}-{size}.jpg"
-        return "https://via.placeholder.com/150x220?text=No+Cover"
-
-    def get_trending_books(self, limit: int = 5) -> List[Dict]:
-        """Get trending/popular books"""
-        # Search for highly rated books in popular genres
-        genres = ["fiction", "mystery", "romance",
-                  "science fiction", "fantasy"]
-        all_books = []
-
-        for genre in genres:
-            books = self.get_books_by_genre(genre, min_rating=4.2, limit=2)
-            all_books.extend(books)
-
-        # Sort by rating and return top books
-        all_books.sort(key=lambda x: x["rating"], reverse=True)
-        return all_books[:limit]
-
 
 if __name__ == "__main__":
-    book_service = BookService()
-    print(book_service.get_trending_books())
+    pass

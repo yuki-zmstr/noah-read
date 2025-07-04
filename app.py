@@ -49,7 +49,8 @@ demo = gr.ChatInterface(
     Just tell me what you'd like to do in natural language!
     """,
     examples=[
-        "Recommend me some science fiction books with high ratings",
+        "Recommend me some science fiction books",
+        "Recommend me some books written by J. K. Rowling",
         "Schedule 45 minutes to read The Three Body Problem",
         "Schedule a reading session for The Three Body Problem",
         "What are the benefits of reading regularly?",
@@ -62,5 +63,3 @@ if __name__ == "__main__":
     # Initialize the ReAct agent
     agent = ReActAgent()
     demo.launch(pwa=True)
-    # process_message(
-    #     "Create a review for The Martian by Andy Weir - rating 5, it was a great book", [])

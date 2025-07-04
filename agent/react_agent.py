@@ -91,9 +91,9 @@ Explain meaning:
 - your action will be FINAL_ANSWER, and action_input will be your response.
 
 Book recommendations: 
-- You will at least need the genre or search query. 
+- You can search using genre or author 
 - The action input must be in JSON format.
-- The schema is {'genre': str, 'min_rating': float}
+- The schema is {'genre': str} or {'author': str}
 - If you don't have enough information, ask the user for more information.
 
 Scheduling:
@@ -121,7 +121,7 @@ Available tools:
         return [
             Tool(
                 name="book_recommendation",
-                description="Get book recommendations based on genre, author, or preferences. Input should be a JSON string with 'query', 'genre', 'min_rating' (optional) fields",
+                description="Get book recommendations based on genre, author, or preferences. Input should be a JSON string with 'genre', or 'author' fields",
                 func=self._recommend_books
             ),
             Tool(
@@ -141,11 +141,13 @@ Available tools:
         try:
             params = json.loads(input_str)
             query = params.get("query", "")
+            author = params.get("author", "")
             genre = params.get("genre", "")
-            min_rating = params.get("min_rating", 4.0)
 
-            if genre:
-                books = self.book_service.get_books_by_genre(genre, min_rating)
+            if genre: # search by genre
+                books = self.book_service.get_books_by_genre(genre)
+            elif author: # search by author
+                books = self.book_service.get_books_by_author(author)
             elif query:
                 books = self.book_service.search_books(query)
             else:
