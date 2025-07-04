@@ -144,12 +144,12 @@ Available tools:
             author = params.get("author", "")
             genre = params.get("genre", "")
 
-            if genre: # search by genre
+            if genre: # search by genre, use OpenLibary
                 books = self.book_service.get_books_by_genre(genre)
-            elif author: # search by author
-                books = self.book_service.get_books_by_author(author)
-            elif query:
-                books = self.book_service.search_books(query)
+            elif author: # search by author, use GoogleBooks API
+                books = self.book_service.search_books_google(author=author)
+            elif query: # general keyword search, use GoogleBooks API
+                books = self.book_service.search_books(query=query)
             else:
                 return "Please specify either a genre or search query for book recommendations."
 
@@ -159,7 +159,7 @@ Available tools:
             result = "Here are some book recommendations:\n\n"
             for i, book in enumerate(books[:5], 1):
                 result += f"{i}. **{book['title']}** by {book['author']}\n"
-                result += f"   Rating: {book['rating']}/5\n"
+                result += f"   Rating: {book['rating']}\n"
                 result += f"   {book['description'][:150]}...\n"
                 result += f"   [More info]({book['link']})\n\n"
 

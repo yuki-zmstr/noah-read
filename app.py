@@ -36,7 +36,7 @@ demo = gr.ChatInterface(
     description="""
     Hi, I'm Noah! Your intelligent reading companion powered by a ReAct agent. I can help you:
     
-    📖 **Book Recommendations**: Get personalized book suggestions from OpenLibrary
+    📖 **Book Recommendations**: Get personalized book suggestions from OpenLibrary / Google Books API
     
     📅 **Reading Scheduling**: Schedule reading sessions in your Google Calendar  
     
